@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050505" />
+    <link rel="preconnect" href="https://api.dicebear.com" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <title>Vibekart | Future-Proof Shopping</title>
+    <style>
+      /* Critical CSS for Instant Render */
+      :root {
+        --bg-black: #050505;
+        --accent-blue: #00d2ff;
+        --accent-purple: #9d50bb;
+      }
+      body {
+        margin: 0;
+        background-color: var(--bg-black);
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: white;
+        overflow-x: hidden;
+      }
+      .instant-shell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        background-color: var(--bg-black);
+      }
+      .instant-logo {
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: 4px;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; transform: scale(0.98); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- This shell is visible until React Hydrates -->
+      <div class="instant-shell" id="app-shell">
+        <div class="instant-logo">VIBEKART</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Remove shell once JS starts executing to prevent overlap issues
+      // though React will naturally replace the innerHTML of #root
+    </script>
+  </body>
+</html>
