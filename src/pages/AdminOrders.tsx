@@ -177,7 +177,7 @@ export default function AdminOrders() {
                 <div>
                   <h4 style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Items ({order.items.length})</h4>
                   {order.items.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: '0.85rem' }}>{item.name} x {item.quantity} (${item.price})</div>
+                    <div key={idx} style={{ fontSize: '0.85rem' }}>{item.name} x {item.quantity} (₹{item.price})</div>
                   ))}
                 </div>
                 <div>
@@ -186,8 +186,9 @@ export default function AdminOrders() {
                 </div>
                 <div>
                   <h4 style={{ fontSize: '0.75rem', opacity: 0.5, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Details</h4>
-                  <p style={{ fontSize: '0.85rem' }}>Total: <strong>${order.total.toFixed(2)}</strong></p>
-                  <p style={{ fontSize: '0.85rem' }}>Payment: {order.paymentMethod}</p>
+                  <p style={{ fontSize: '0.85rem' }}>Total: <strong>₹{order.total.toFixed(2)}</strong></p>
+                  <p style={{ fontSize: '0.85rem' }}>Method: {order.paymentMethod}</p>
+                  <p style={{ fontSize: '0.85rem', color: order.paymentStatus === 'paid' ? '#00ff66' : 'var(--accent-blue)' }}>Status: <strong>{order.paymentStatus || 'Pending'}</strong></p>
                   <p style={{ fontSize: '0.85rem', opacity: 0.5 }}>Date: {order.createdAt ? new Date(order.createdAt._seconds * 1000).toLocaleString() : 'N/A'}</p>
                 </div>
               </div>

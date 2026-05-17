@@ -4,6 +4,18 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { indiaData } from '../data/indiaData';
 import toast from 'react-hot-toast';
+import { 
+  ArrowLeft, 
+  Minus, 
+  Plus, 
+  X, 
+  CreditCard, 
+  Truck, 
+  ShoppingBag,
+  ChevronRight,
+  Ticket,
+  CheckCircle2
+} from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
@@ -72,6 +84,49 @@ export default function Cart() {
   // Payment State
   const [paymentMethod, setPaymentMethod] = useState('COD');
 
+  // Coupon State
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number, type: string } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const handleVerifyCoupon = async () => {
+    if (!couponInput) return;
+    setCouponLoading(true);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch(`${BACKEND_URL}/verify-coupon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: couponInput }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAppliedCoupon(data);
+        toast.success(`Coupon "${data.code}" applied!`);
+      } else {
+        const err = await res.json();
+        toast.error(err.message || 'Invalid coupon');
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      toast.error('Failed to verify coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const calculateTotal = () => {
+    if (!appliedCoupon) return cartTotal;
+    if (appliedCoupon.type === 'fixed') {
+      return Math.max(0, cartTotal - appliedCoupon.discount);
+    }
+    return cartTotal * (1 - appliedCoupon.discount / 100);
+  };
+
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       if (window.Razorpay) {
@@ -103,7 +158,8 @@ export default function Cart() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ 
-          items: cart.map(item => ({ id: item.id, quantity: item.quantity })) 
+          items: cart.map(item => ({ id: item.id, quantity: item.quantity })),
+          couponCode: appliedCoupon?.code
         }),
       });
 
@@ -128,7 +184,8 @@ export default function Cart() {
               body: JSON.stringify({
                 ...response,
                 items: cart,
-                address: `${addressLine}, ${villageCity}, ${selectedDistrict}, ${selectedState} - ${pinCode}. Phone: ${phoneNumber}`
+                address: `${addressLine}, ${villageCity}, ${selectedDistrict}, ${selectedState} - ${pinCode}. Phone: ${phoneNumber}`,
+                couponCode: appliedCoupon?.code
               }),
             });
 
@@ -206,7 +263,10 @@ export default function Cart() {
       return;
     }
 
-    if (paymentMethod === 'Razorpay') {
+    const currentTotal = calculateTotal();
+    const finalPaymentMethod = currentTotal <= 0 ? 'FREE_COUPON' : paymentMethod;
+
+    if (finalPaymentMethod === 'Razorpay') {
       await handleRazorpayPayment();
       return;
     }
@@ -225,7 +285,8 @@ export default function Cart() {
         body: JSON.stringify({
           items: cart,
           address: fullAddress,
-          paymentMethod
+          paymentMethod: finalPaymentMethod,
+          couponCode: appliedCoupon?.code
         }),
       });
 
@@ -274,9 +335,18 @@ export default function Cart() {
         {step !== 'cart' && (
           <button 
             onClick={() => setStep(step === 'payment' ? 'address' : 'cart')}
-            style={{ fontSize: '1.2rem', opacity: 0.6 }}
+            style={{ 
+              background: 'var(--glass-bg)', 
+              borderRadius: '50%', 
+              width: '40px', 
+              height: '40px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'white'
+            }}
           >
-            ←
+            <ArrowLeft size={20} />
           </button>
         )}
         <h1 className="neon-text" style={{ fontSize: '1.8rem' }}>
@@ -299,14 +369,20 @@ export default function Cart() {
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
-                  <p style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>${item.price}</p>
+                  <p style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>₹{item.price}</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px' }}>-</button>
+                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Minus size={14} />
+                  </button>
                   <span style={{ minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px' }}>+</button>
+                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Plus size={14} />
+                  </button>
                 </div>
-                <button onClick={() => removeFromCart(item.id)} style={{ color: '#ff4b2b', fontWeight: 'bold', fontSize: '0.8rem' }}>×</button>
+                <button onClick={() => removeFromCart(item.id)} style={{ color: '#ff4b2b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}>
+                  <X size={20} />
+                </button>
               </div>
             ))
           )}
@@ -446,7 +522,62 @@ export default function Cart() {
           )}
 
           {step === 'payment' && (
-            <div className="glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Coupon Box */}
+              <div className="glass" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Ticket size={18} /> Apply Promo Code
+                </h3>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Enter code (e.g. VIBE20)" 
+                      className="glass" 
+                      style={{ 
+                        width: '100%', 
+                        padding: '0.8rem 1rem', 
+                        color: 'white',
+                        textTransform: 'uppercase',
+                        border: appliedCoupon ? '1px solid #00ff66' : '1px solid var(--glass-border)'
+                      }} 
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      disabled={!!appliedCoupon}
+                    />
+                    {appliedCoupon && (
+                      <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#00ff66' }}>
+                        <CheckCircle2 size={18} />
+                      </div>
+                    )}
+                  </div>
+                  {appliedCoupon ? (
+                    <button 
+                      onClick={() => { setAppliedCoupon(null); setCouponInput(''); }}
+                      className="glass"
+                      style={{ padding: '0 1.25rem', color: '#ff4b2b', fontSize: '0.875rem' }}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleVerifyCoupon}
+                      className="neon-button"
+                      disabled={!couponInput || couponLoading}
+                      style={{ padding: '0 1.5rem', opacity: !couponInput || couponLoading ? 0.5 : 1 }}
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  )}
+                </div>
+                {appliedCoupon && (
+                  <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#00ff66', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    Successfully applied {appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : `₹${appliedCoupon.discount}`} discount!
+                  </p>
+                )}
+              </div>
+
+              <div className="glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '0.5rem' }}>Choose your payment method</p>
               <div 
                 onClick={() => setPaymentMethod('COD')}
@@ -472,7 +603,10 @@ export default function Cart() {
                 }}>
                   {paymentMethod === 'COD' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-blue)' }} />}
                 </div>
-                <span>Cash on Delivery</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Truck size={20} style={{ color: 'var(--accent-blue)' }} />
+                  <span>Cash on Delivery</span>
+                </div>
               </div>
 
               <div 
@@ -498,20 +632,38 @@ export default function Cart() {
                 }}>
                   {paymentMethod === 'Razorpay' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-blue)' }} />}
                 </div>
-                <span>Online Payment (Razorpay)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <CreditCard size={20} style={{ color: 'var(--accent-blue)' }} />
+                  <span>Online Payment (Razorpay)</span>
+                </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Right Column: Order Summary & Action */}
+      {/* Right Column: Order Summary & Action */}
         <div className="glass cart-summary" style={{ padding: '2rem', position: 'sticky', top: '2rem', height: 'fit-content' }}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.2rem' }}>Order Summary</h2>
+          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShoppingBag size={20} /> Order Summary
+          </h2>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <span>Subtotal</span>
-            <span>${cartTotal.toFixed(2)}</span>
+            <span>₹{cartTotal.toFixed(2)}</span>
           </div>
+          {appliedCoupon && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: '#00ff66' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Ticket size={14} /> Discount ({appliedCoupon.code})
+              </span>
+              <span>
+                -{appliedCoupon.type === 'percentage' 
+                  ? `₹${(cartTotal * appliedCoupon.discount / 100).toFixed(2)}` 
+                  : `₹${appliedCoupon.discount.toFixed(2)}`}
+              </span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
             <span>Shipping</span>
             <span style={{ color: 'var(--accent-blue)' }}>FREE</span>
@@ -519,29 +671,29 @@ export default function Cart() {
           <hr style={{ border: '0', borderTop: '1px solid var(--glass-border)', margin: '1.5rem 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
             <span>Total</span>
-            <span className="neon-text">${cartTotal.toFixed(2)}</span>
+            <span className="neon-text">₹{calculateTotal().toFixed(2)}</span>
           </div>
           
           {step === 'cart' && (
-            <button className="neon-button" style={{ width: '100%', padding: '1rem' }} onClick={() => setStep('address')}>
-              Checkout Now
+            <button className="neon-button" style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => setStep('address')}>
+              Checkout Now <ChevronRight size={18} />
             </button>
           )}
 
           {step === 'address' && (
-            <button className="neon-button" style={{ width: '100%', padding: '1rem' }} onClick={handleNextToPayment}>
-              Next: Payment
+            <button className="neon-button" style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={handleNextToPayment}>
+              Next: Payment <ChevronRight size={18} />
             </button>
           )}
 
           {step === 'payment' && (
             <button 
               className="neon-button" 
-              style={{ width: '100%', padding: '1rem' }} 
+              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
               onClick={handlePlaceOrder}
               disabled={loading}
             >
-              {loading ? 'Processing...' : 'Place Order'}
+              {loading ? 'Processing...' : <><CreditCard size={20} /> Place Order</>}
             </button>
           )}
 

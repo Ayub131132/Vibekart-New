@@ -58,6 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     try {
       const token = await user.getIdToken();
+      console.log('[DEBUG] Syncing cart to cloud...', newCart.length, 'items');
       const res = await fetch(`${BACKEND_URL}/update-cart`, {
         method: 'POST',
         headers: { 
@@ -73,10 +74,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid]);
 
+  // Debounced sync for high-stock/frequent changes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (cart.length > 0) {
+        syncToBackend(cart);
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(handler);
+  }, [cart, syncToBackend]);
+
   const addToCart = useCallback((product: Product) => {
     setCart((prevCart) => {
-      let newCart;
       const existingItem = prevCart.find((item) => item.id === product.id);
+      const currentQty = existingItem ? existingItem.quantity : 0;
+
+      // 1. Stock Validation
+      if (currentQty >= product.stock) {
+        toast.error(`Only ${product.stock} units available in stock.`, { id: 'stock-limit' });
+        return prevCart;
+      }
+
+      let newCart;
       if (existingItem) {
         newCart = prevCart.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
@@ -84,15 +104,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } else {
         newCart = [...prevCart, { ...product, quantity: 1 }];
       }
-      syncToBackend(newCart);
+      
+      // Note: syncToBackend is now handled by the debounced useEffect
+      toast.success(`Added ${product.name} to cart`, { id: 'cart-success' });
       return newCart;
     });
-  }, [syncToBackend]);
+  }, []);
 
   const removeFromCart = useCallback((productId: string) => {
     setCart((prevCart) => {
       const newCart = prevCart.filter((item) => item.id !== productId);
-      syncToBackend(newCart);
+      syncToBackend(newCart); // Immediate sync on remove is fine
       return newCart;
     });
   }, [syncToBackend]);
@@ -102,14 +124,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeFromCart(productId);
       return;
     }
+
     setCart((prevCart) => {
+      const item = prevCart.find(i => i.id === productId);
+      if (item && quantity > item.stock) {
+        toast.error(`Only ${item.stock} units available.`, { id: 'stock-limit-update' });
+        return prevCart;
+      }
+
       const newCart = prevCart.map((item) =>
         item.id === productId ? { ...item, quantity } : item
       );
-      syncToBackend(newCart);
       return newCart;
     });
-  }, [removeFromCart, syncToBackend]);
+  }, [removeFromCart]);
 
   const clearCart = useCallback(() => {
     setCart([]);

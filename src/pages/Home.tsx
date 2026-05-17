@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import Skeleton from '../components/Skeleton';
 import type { Product } from '../types';
 import toast from 'react-hot-toast';
+import { Search, WifiOff, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const PRODUCTS_PER_PAGE = 8;
@@ -40,10 +41,12 @@ export default function Home() {
       params.append('limit', PRODUCTS_PER_PAGE.toString());
       
       const url = `${BACKEND_URL}/get-products?${params.toString()}`;
+      console.log(`[DEBUG] Fetching products from: ${url}`);
       const res = await fetch(url);
       
       if (res.ok) {
         const { products: newProducts, lastId: newLastId, hasMore: moreAvailable } = await res.json();
+        console.log(`[DEBUG] Received ${newProducts.length} products. HasMore: ${moreAvailable}`);
         
         setDynamicProducts(prev => isLoadMore ? [...prev, ...newProducts] : newProducts);
         setLastId(newLastId);
@@ -153,7 +156,7 @@ export default function Home() {
           style={{ 
             width: '100%', 
             padding: '1rem 1.5rem', 
-            paddingLeft: '3rem',
+            paddingLeft: '3.5rem',
             borderRadius: '12px',
             color: 'white',
             border: searchQuery ? '1px solid var(--accent-blue)' : '1px solid var(--glass-border)',
@@ -162,7 +165,9 @@ export default function Home() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+        <div style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>
+          <Search size={20} />
+        </div>
       </div>
 
       {/* 3. Category Chips */}
@@ -189,7 +194,9 @@ export default function Home() {
       {/* 4. Product Grid */}
       {error && !loading && dynamicProducts.length === 0 && (
         <div className="glass" style={{ padding: '3rem', textAlign: 'center', margin: '2rem 0', border: '1px solid rgba(255, 75, 43, 0.3)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📡</div>
+          <div style={{ marginBottom: '1.5rem', color: '#ff4b2b', display: 'flex', justifyContent: 'center' }}>
+            <WifiOff size={48} />
+          </div>
           <h2 style={{ color: '#ff4b2b', marginBottom: '1rem' }}>Vibe Disconnected</h2>
           <p style={{ opacity: 0.7, marginBottom: '2rem' }}>{error}</p>
           <button className="neon-button" onClick={() => fetchProducts()}>RETRY CONNECTION</button>
@@ -224,7 +231,8 @@ export default function Home() {
       </div>
 
       {loadingMore && (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+          <Loader2 className="animate-spin" size={24} style={{ color: 'var(--accent-blue)' }} />
           <div className="neon-text" style={{ fontSize: '0.9rem', letterSpacing: '2px' }}>LOADING MORE VIBES...</div>
         </div>
       )}

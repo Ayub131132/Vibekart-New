@@ -198,7 +198,7 @@ export default function ProductManagement() {
                         }}>{p.category}</span>
                       </td>
                       <td style={{ padding: '1.25rem' }}>
-                        <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--accent-blue)' }}>${p.price.toFixed(2)}</p>
+                        <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--accent-blue)' }}>₹{p.price.toFixed(2)}</p>
                       </td>
                       <td style={{ padding: '1.25rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>

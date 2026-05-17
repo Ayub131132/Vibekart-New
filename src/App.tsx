@@ -1,11 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout'; // Synchronous import for instant shell
 import Skeleton from './components/Skeleton';
-import { useNotifications } from './hooks/useNotifications';
-import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Page components are lazy-loaded to keep initial bundle small
@@ -24,6 +20,16 @@ const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminCoupons = lazy(() => import('./pages/admin/Coupons'));
 const AdminSettings = lazy(() => import('./pages/admin/Dashboard')); // Placeholder for now
+
+// Defer heavy non-critical components
+const NotificationHandler = lazy(() => import('./hooks/useNotifications').then(m => ({
+  default: () => {
+    m.useNotifications();
+    return null;
+  }
+})));
+
+const LazyToaster = lazy(() => import('react-hot-toast').then(m => ({ default: m.Toaster })));
 
 // Ultra-lightweight fallback for route transitions
 const PageFallback = () => (
@@ -49,70 +55,63 @@ const PageFallback = () => (
   </div>
 );
 
-function NotificationHandler() {
-  useNotifications();
-  return null;
-}
-
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <NotificationHandler />
-        <CartProvider>
-          <Router>
-            <Toaster 
-              position="top-center"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'rgba(15, 15, 15, 0.8)',
-                  color: '#fff',
-                  border: '1px solid var(--glass-border)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: 'var(--border-radius-md)',
-                  boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+      <Router>
+        <Suspense fallback={null}>
+          <NotificationHandler />
+          <LazyToaster 
+            position="top-center"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: 'rgba(15, 15, 15, 0.8)',
+                color: '#fff',
+                border: '1px solid var(--glass-border)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: 'var(--border-radius-md)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+              },
+              success: {
+                iconTheme: {
+                  primary: 'var(--accent-blue)',
+                  secondary: '#fff',
                 },
-                success: {
-                  iconTheme: {
-                    primary: 'var(--accent-blue)',
-                    secondary: '#fff',
-                  },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ff4b2b',
+                  secondary: '#fff',
                 },
-                error: {
-                  iconTheme: {
-                    primary: '#ff4b2b',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                {/* Storefront Routes with Default Layout */}
-                <Route element={<Layout><Home /></Layout>} path="/" />
-                <Route element={<Layout><Cart /></Layout>} path="/cart" />
-                <Route element={<Layout><Orders /></Layout>} path="/orders" />
-                <Route element={<Layout><OrderDetails /></Layout>} path="/order/:id" />
-                <Route element={<Layout><ProductDetails /></Layout>} path="/product/:id" />
-                <Route element={<Layout><Profile /></Layout>} path="/profile" />
-                <Route element={<Layout><Login /></Layout>} path="/login" />
-                <Route element={<Layout><Register /></Layout>} path="/register" />
-                
-                {/* Admin Routes - These use AdminLayout internally */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/products" element={<AdminProducts />} />
-                <Route path="/admin/products/add" element={<AdminAddProduct />} />
-                <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
-                <Route path="/admin/orders" element={<AdminOrders />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/coupons" element={<AdminCoupons />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-              </Routes>
-            </Suspense>
-          </Router>
-        </CartProvider>
-      </AuthProvider>
+              },
+            }}
+          />
+        </Suspense>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            {/* Storefront Routes with Default Layout */}
+            <Route element={<Layout><Home /></Layout>} path="/" />
+            <Route element={<Layout><Cart /></Layout>} path="/cart" />
+            <Route element={<Layout><Orders /></Layout>} path="/orders" />
+            <Route element={<Layout><OrderDetails /></Layout>} path="/order/:id" />
+            <Route element={<Layout><ProductDetails /></Layout>} path="/product/:id" />
+            <Route element={<Layout><Profile /></Layout>} path="/profile" />
+            <Route element={<Layout><Login /></Layout>} path="/login" />
+            <Route element={<Layout><Register /></Layout>} path="/register" />
+            
+            {/* Admin Routes - These use AdminLayout internally */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/products/add" element={<AdminAddProduct />} />
+            <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
+            <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/coupons" element={<AdminCoupons />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+          </Routes>
+        </Suspense>
+      </Router>
     </ErrorBoundary>
   );
 }

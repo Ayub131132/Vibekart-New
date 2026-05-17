@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -11,25 +11,41 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showSignupLink, setShowSignupLink] = useState(false);
   
-  const { loginWithGoogle, sendOTP, verifyOTP, user } = useAuth();
+  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, logout } = useAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect to profile
-  if (user) {
+  // If already logged in AND has profile, redirect
+  if (user && dbUser) {
     navigate('/profile');
     return null;
   }
 
   const handleGoogleAuth = async () => {
+    setError('');
+    setShowSignupLink(false);
     try {
       await loginWithGoogle();
-      toast.success('Welcome back, Vibe Member!');
-      navigate('/profile');
+      // After login, AuthContext will attempt to sync.
+      // We need to wait for dbUser or a timeout.
+      // However, a better UX is to check immediately if we can.
     } catch {
       setError('Failed to login with Google');
       toast.error('Google login failed');
     }
   };
+
+  // Add an effect to catch missing profile after login
+  useEffect(() => {
+    if (user && !loading && !dbUser) {
+      // User is logged into Firebase but has no database record
+      setError('Account not found in database. Please register first.');
+      setShowSignupLink(true);
+      logout(); // Security: Don't keep them logged in if they don't have a profile
+    } else if (user && dbUser) {
+      toast.success('Welcome back, Vibe Member!');
+      navigate('/profile');
+    }
+  }, [user, dbUser, loading, navigate, logout]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

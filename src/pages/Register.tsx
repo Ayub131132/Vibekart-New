@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -10,25 +10,47 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { loginWithGoogle, sendOTP, verifyOTP, user } = useAuth();
+  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, createProfile } = useAuth();
   const navigate = useNavigate();
 
-  // If already logged in, redirect to profile
-  if (user) {
+  // If already logged in AND has profile, redirect
+  if (user && dbUser) {
     navigate('/profile');
     return null;
   }
 
   const handleGoogleAuth = async () => {
+    setError('');
     try {
       await loginWithGoogle();
-      toast.success('Welcome to the Vibe!');
-      navigate('/profile');
+      // AuthContext will call syncUser. 
+      // If it's a new user, syncUser will set dbUser to null.
+      // We should check and create profile.
     } catch {
       setError('Failed to signup with Google');
       toast.error('Google signup failed');
     }
   };
+
+  // Add an effect to handle profile creation for Google signup
+  useEffect(() => {
+    const handleGoogleRegistration = async () => {
+      if (user && !loading && !dbUser) {
+        try {
+          await createProfile(user);
+          toast.success('Account created! Welcome to Vibekart.');
+          navigate('/profile');
+        } catch (err: any) {
+          setError(err.message || 'Failed to create profile');
+        }
+      } else if (user && dbUser) {
+        toast.success('Welcome back, Vibe Member!');
+        navigate('/profile');
+      }
+    };
+    
+    handleGoogleRegistration();
+  }, [user, dbUser, loading, navigate, createProfile]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

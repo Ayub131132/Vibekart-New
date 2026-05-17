@@ -24,7 +24,10 @@ export type Order = {
   orderId: string;
   uid: string;
   items: CartItem[];
+  subtotal?: number;
+  discount?: number;
   total: number;
+  couponCode?: string | null;
   status: OrderStatus;
   createdAt: {
     _seconds: number;
@@ -32,6 +35,8 @@ export type Order = {
   };
   address: string;
   paymentMethod: string;
+  paymentStatus?: string;
+  razorpayOrderId?: string | null;
 };
 
 // Dummy export to ensure module resolution

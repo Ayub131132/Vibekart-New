@@ -74,6 +74,11 @@ export default function AddProduct() {
       return;
     }
 
+    if (description.length < 10) {
+      toast.error('Description must be at least 10 characters long');
+      return;
+    }
+
     setActionLoading(true);
     try {
       let finalImageUrl = image;
@@ -87,21 +92,33 @@ export default function AddProduct() {
         ? `${BACKEND_URL}/update-product/${id}`
         : `${BACKEND_URL}/add-product`;
       
+      const payload = { 
+        name, 
+        price: parseFloat(price), 
+        description, 
+        category, 
+        image: finalImageUrl, 
+        stock: parseInt(stock, 10) 
+      };
+
+      console.log(`[DEBUG] Submitting to ${url}:`, payload);
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name, price, description, category, image: finalImageUrl, stock }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         toast.success(isEditing ? 'Product updated successfully' : 'Product created successfully');
         navigate('/admin/products');
       } else {
-        const errorText = await res.text();
-        toast.error(`Error: ${errorText}`);
+        const errorData = await res.json();
+        console.error('[ERROR] Server responded with:', errorData);
+        toast.error(`Error: ${errorData.message || 'Unknown server error'}`);
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -167,7 +184,7 @@ export default function AddProduct() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Price ($)</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Price (₹)</label>
                   <input 
                     type="number" 
                     step="0.01"

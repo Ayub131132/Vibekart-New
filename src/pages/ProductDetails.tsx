@@ -69,7 +69,7 @@ export default function ProductDetails() {
           <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>{product.description}</p>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>${product.price}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>₹{product.price}</div>
             <div style={{ 
               fontSize: '0.9rem', 
               padding: '0.4rem 1rem', 

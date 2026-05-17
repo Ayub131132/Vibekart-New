@@ -72,7 +72,12 @@ export default function CouponManagement() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ code, discount, type, expiryDate }),
+        body: JSON.stringify({ 
+          code, 
+          discount: parseFloat(discount), 
+          type, 
+          expiryDate 
+        }),
       });
 
       if (res.ok) {
@@ -83,9 +88,12 @@ export default function CouponManagement() {
         setShowForm(false);
         fetchCoupons();
       } else {
-        toast.error('Failed to add coupon');
+        const errorData = await res.json();
+        console.error('[ERROR] Server responded with:', errorData);
+        toast.error(`Error: ${errorData.message || 'Failed to add coupon'}`);
       }
     } catch (err) {
+      console.error('Error adding coupon:', err);
       toast.error('Error adding coupon');
     } finally {
       setActionLoading(false);
@@ -147,10 +155,16 @@ export default function CouponManagement() {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Type</label>
-                <select className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white', background: 'var(--bg-black)' }} value={type} onChange={e => setType(e.target.value as any)}>
+                <select 
+                  className="glass" 
+                  style={{ width: '100%', padding: '0.8rem', color: 'white', background: 'var(--bg-black)' }} 
+                  value={type} 
+                  onChange={e => setType(e.target.value as any)}
+                >
                   <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount ($)</option>
+                  <option value="fixed">Fixed Amount (₹)</option>
                 </select>
+
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Expiry Date</label>
@@ -190,7 +204,7 @@ export default function CouponManagement() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <div>
                     <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                      {coupon.type === 'percentage' ? `${coupon.discount}%` : `$${coupon.discount}`}
+                      {coupon.type === 'percentage' ? `${coupon.discount}%` : `₹${coupon.discount}`}
                       <span style={{ fontSize: '0.875rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>OFF</span>
                     </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Expires: {new Date(coupon.expiryDate).toLocaleDateString()}</p>

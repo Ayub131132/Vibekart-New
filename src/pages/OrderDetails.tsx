@@ -211,7 +211,7 @@ export default function OrderDetails() {
                     <p style={{ fontSize: '0.8rem', opacity: 0.5 }}>Quantity: {item.quantity}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontWeight: 'bold' }}>${(item.price * item.quantity).toFixed(2)}</p>
+                    <p style={{ fontWeight: 'bold' }}>₹{(item.price * item.quantity).toFixed(2)}</p>
                     {order.status === 'delivered' && (
                       <button 
                         onClick={() => setShowReviewModal(item.name)}
@@ -234,7 +234,7 @@ export default function OrderDetails() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                 <span style={{ opacity: 0.6 }}>Subtotal</span>
-                <span>${order.total.toFixed(2)}</span>
+                <span>₹{order.total.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                 <span style={{ opacity: 0.6 }}>Shipping</span>
@@ -243,13 +243,15 @@ export default function OrderDetails() {
               <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0' }}></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.1rem' }}>
                 <span>Total</span>
-                <span className="neon-text">${order.total.toFixed(2)}</span>
+                <span className="neon-text">₹{order.total.toFixed(2)}</span>
               </div>
             </div>
             
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
               <p style={{ fontSize: '0.75rem', opacity: 0.5, marginBottom: '0.25rem', textTransform: 'uppercase' }}>Payment Method</p>
-              <p style={{ fontSize: '0.9rem' }}>{order.paymentMethod}</p>
+              <p style={{ fontSize: '0.9rem' }}>{order.paymentMethod === 'FREE_COUPON' ? 'Free (100% Coupon)' : order.paymentMethod}</p>
+              <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '1rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Payment Status</p>
+              <p style={{ fontSize: '0.9rem', color: order.paymentStatus === 'paid' ? '#00ff66' : 'var(--accent-blue)', fontWeight: 'bold', textTransform: 'capitalize' }}>{order.paymentStatus || 'Pending'}</p>
             </div>
           </div>
 

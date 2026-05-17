@@ -180,7 +180,7 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <input type="text" placeholder="Product Title" className="glass" style={{ padding: '0.8rem', color: 'white' }} value={name} onChange={e => setName(e.target.value)} />
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <input type="number" placeholder="Price ($)" className="glass" style={{ flex: 1, padding: '0.8rem', color: 'white' }} value={price} onChange={e => setPrice(e.target.value)} />
+              <input type="number" placeholder="Price (₹)" className="glass" style={{ flex: 1, padding: '0.8rem', color: 'white' }} value={price} onChange={e => setPrice(e.target.value)} />
               <input type="number" placeholder="Stock" className="glass" style={{ flex: 1, padding: '0.8rem', color: 'white' }} value={stock} onChange={e => setStock(e.target.value)} />
             </div>
             
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
               <img src={p.image} style={{ width: '50px', height: '50px', borderRadius: '4px', objectFit: 'cover' }} />
               <div style={{ flex: 1 }}>
                 <h4 style={{ fontSize: '0.9rem' }}>{p.name}</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--accent-blue)' }}>${p.price} | Stock: {p.stock}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--accent-blue)' }}>₹{p.price} | Stock: {p.stock}</p>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 

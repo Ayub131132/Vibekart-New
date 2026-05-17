@@ -116,7 +116,7 @@ export default function Orders() {
                   {order.createdAt ? new Date(order.createdAt._seconds * 1000).toLocaleDateString() : 'Just now'}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span style={{ fontWeight: 'bold', color: 'var(--accent-blue)' }}>${order.total.toFixed(2)}</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--accent-blue)' }}>₹{order.total.toFixed(2)}</span>
                   <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>View Details →</span>
                 </div>
               </div>

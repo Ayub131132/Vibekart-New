@@ -3,6 +3,7 @@ import type { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Skeleton from './Skeleton';
+import { ShoppingCart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -118,23 +119,38 @@ const ProductCard = memo(({ product }: ProductCardProps) => {
         </p>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-        <span className="neon-text" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-          ${product.price}
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <span className="neon-text" style={{ fontSize: '1.4rem', fontWeight: 800 }}>
+          ₹{product.price}
         </span>
         <button 
           onClick={handleAddToCart} 
           className="neon-button" 
           disabled={product.stock <= 0}
           style={{ 
-            padding: '0.4rem 0.8rem', 
+            width: '100%',
+            padding: '0.8rem', 
             fontSize: '0.9rem', 
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
             zIndex: 2,
             opacity: product.stock > 0 ? 1 : 0.5,
-            cursor: product.stock > 0 ? 'pointer' : 'not-allowed'
+            cursor: product.stock > 0 ? 'pointer' : 'not-allowed',
+            border: 'none',
+            boxShadow: product.stock > 0 ? '0 0 15px rgba(0, 210, 255, 0.3)' : 'none'
           }}
         >
-          {product.stock > 0 ? 'Add to Cart' : 'Sold Out'}
+          {product.stock > 0 ? (
+            <>
+              <ShoppingCart size={18} />
+              Add to Cart
+            </>
+          ) : 'Sold Out'}
         </button>
       </div>
     </div>

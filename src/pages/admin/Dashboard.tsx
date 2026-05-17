@@ -4,7 +4,7 @@ import StatCard from '../../components/admin/StatCard';
 import SimpleChart from '../../components/admin/SimpleChart';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  DollarSign, 
+  IndianRupee, 
   ShoppingBag, 
   Users, 
   Package, 
@@ -114,8 +114,8 @@ export default function Dashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <StatCard 
             title="Completed Revenue" 
-            value={`$${(analytics?.totalRevenue || 0).toLocaleString()}`} 
-            icon={DollarSign} 
+            value={`₹${(analytics?.totalRevenue || 0).toLocaleString()}`} 
+            icon={IndianRupee} 
             color="#00d2ff"
             trend={analytics?.trends?.revenue !== null && analytics?.trends?.revenue !== undefined ? { value: Math.abs(analytics.trends.revenue), isPositive: analytics.trends.revenue >= 0 } : undefined}
           />

@@ -20,6 +20,7 @@ export default defineConfig({
             // Split heavy dependencies into their own chunks for better caching
             if (id.includes('firebase')) return 'vendor-firebase';
             if (id.includes('react')) return 'vendor-react';
+            if (id.includes('lucide-react')) return 'vendor-icons';
             return 'vendor';
           }
         }
@@ -37,8 +38,18 @@ export default defineConfig({
     transformer: 'lightningcss',
     lightningcss: {
       targets: {
-        android: 90 << 16, // Optimize for modern Android browsers
+        android: 80 << 16, // Support slightly older Android for better reach
       }
     }
+  },
+  // Optimize dev server for mobile (Termux)
+  server: {
+    host: true,
+    hmr: {
+      overlay: false // Disable HMR overlay to save resources
+    }
+  },
+  optimizeDeps: {
+    include: ['firebase/app', 'firebase/auth', 'firebase/messaging', 'react-router-dom', 'react-hot-toast']
   }
 })

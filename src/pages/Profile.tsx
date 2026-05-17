@@ -165,7 +165,9 @@ export default function Profile() {
             <div style={{ textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>{dbUser.displayName}</h2>
               <p style={{ color: 'var(--accent-blue)', fontWeight: 'bold', marginBottom: '1rem' }}>@{dbUser.username}</p>
-              <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>"{dbUser.bio}"</p>
+              <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', maxWidth: '300px' }}>
+                {dbUser.bio ? `"${dbUser.bio}"` : 'No vibe description yet.'}
+              </p>
             </div>
 
             <div style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

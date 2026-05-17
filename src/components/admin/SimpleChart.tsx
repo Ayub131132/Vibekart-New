@@ -39,7 +39,7 @@ export default function SimpleChart({ data, color = 'var(--accent-blue)' }: Simp
               borderRadius: '4px 4px 0 0',
               transition: 'height 0.5s ease',
               minHeight: d.sales > 0 ? '4px' : '0'
-            }} title={`$${d.sales}`}></div>
+            }} title={`₹${d.sales}`}></div>
             <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', transform: 'rotate(-45deg)', marginTop: '5px' }}>
               {new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
             </span>
