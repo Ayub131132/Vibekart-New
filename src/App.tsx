@@ -20,6 +20,7 @@ const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminCoupons = lazy(() => import('./pages/admin/Coupons'));
 const AdminSettings = lazy(() => import('./pages/admin/Dashboard')); // Placeholder for now
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Defer heavy non-critical components
 const NotificationHandler = lazy(() => import('./hooks/useNotifications').then(m => ({
@@ -109,6 +110,9 @@ function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/coupons" element={<AdminCoupons />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+
+            {/* Catch-all Route for 404 */}
+            <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
         </Suspense>
       </Router>
