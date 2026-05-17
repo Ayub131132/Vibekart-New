@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Skeleton from '../components/Skeleton';
 import type { Order, OrderStatus } from '../types';
 import toast from 'react-hot-toast';
-import { Package, Truck, CheckCircle, XCircle, Star, ArrowLeft } from 'lucide-react';
+import { Package, Truck, CheckCircle, XCircle, Star, ArrowLeft, Send } from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
@@ -15,7 +15,7 @@ export default function OrderDetails() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState<{ id: string, name: string } | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
@@ -108,11 +108,35 @@ export default function OrderDetails() {
     }
   };
 
-  const handleSubmitReview = () => {
-    toast.success('Thank you for your review!');
-    setShowReviewModal(null);
-    setRating(5);
-    setComment('');
+  const handleSubmitReview = async () => {
+    if (!user || !showReviewModal) return;
+    
+    setActionLoading(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${BACKEND_URL}/products/${showReviewModal.id}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rating, comment: comment.trim() })
+      });
+
+      if (res.ok) {
+        toast.success('Vibe shared! Thank you.');
+        setShowReviewModal(null);
+        setRating(5);
+        setComment('');
+      } else {
+        const err = await res.json();
+        toast.error(err.message || 'Failed to submit review');
+      }
+    } catch (err) {
+      toast.error('Connection error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (authLoading || loading) {
@@ -214,7 +238,7 @@ export default function OrderDetails() {
                     <p style={{ fontWeight: 'bold' }}>₹{(item.price * item.quantity).toFixed(2)}</p>
                     {order.status === 'delivered' && (
                       <button 
-                        onClick={() => setShowReviewModal(item.name)}
+                        onClick={() => setShowReviewModal({ id: item.id, name: item.name })}
                         style={{ fontSize: '0.7rem', color: 'var(--accent-blue)', marginTop: '0.25rem' }}
                       >
                         Write a Review
@@ -293,43 +317,47 @@ export default function OrderDetails() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
         }}>
           <div className="glass" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem' }}>Review {showReviewModal}</h2>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', fontWeight: 800 }}>SHARE YOUR VIBE: <span style={{ color: 'var(--accent-blue)' }}>{showReviewModal.name}</span></h2>
             
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', justifyContent: 'center' }}>
               {[1, 2, 3, 4, 5].map(star => (
                 <Star 
                   key={star} 
-                  size={32} 
-                  fill={star <= rating ? 'var(--accent-blue)' : 'none'} 
-                  color={star <= rating ? 'var(--accent-blue)' : 'white'}
-                  style={{ cursor: 'pointer' }}
+                  size={40} 
+                  fill={star <= rating ? '#ffcc00' : 'none'} 
+                  color={star <= rating ? '#ffcc00' : 'rgba(255,255,255,0.2)'}
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
                   onClick={() => setRating(star)}
                 />
               ))}
             </div>
 
-            <textarea 
-              placeholder="Tell us about your experience..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="glass"
-              style={{ width: '100%', minHeight: '120px', padding: '1rem', marginBottom: '1.5rem', color: 'white' }}
-            />
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', opacity: 0.5, marginBottom: '0.5rem', letterSpacing: '1px' }}>COMMENT (OPTIONAL)</label>
+              <textarea 
+                placeholder="What's the vibe? (Optional)"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="glass"
+                style={{ width: '100%', minHeight: '120px', padding: '1rem', color: 'white', resize: 'none' }}
+              />
+            </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button 
                 className="glass" 
-                style={{ flex: 1, padding: '0.8rem' }}
+                style={{ flex: 1, padding: '0.8rem', borderRadius: '12px' }}
                 onClick={() => setShowReviewModal(null)}
               >
-                Cancel
+                Skip
               </button>
               <button 
                 className="neon-button" 
-                style={{ flex: 2, padding: '0.8rem' }}
+                style={{ flex: 2, padding: '0.8rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 onClick={handleSubmitReview}
+                disabled={actionLoading}
               >
-                Submit Review
+                {actionLoading ? 'Sharing...' : <><Send size={18} /> Post Review</>}
               </button>
             </div>
           </div>
