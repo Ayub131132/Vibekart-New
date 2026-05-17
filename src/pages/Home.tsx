@@ -9,8 +9,12 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const PRODUCTS_PER_PAGE = 8;
 
 export default function Home() {
-  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dynamicProducts, setDynamicProducts] = useState<Product[]>(() => {
+    // Instant Load from Cache
+    const cached = localStorage.getItem('vibe_home_products');
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [loading, setLoading] = useState(dynamicProducts.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,14 +25,16 @@ export default function Home() {
 
   const observer = useRef<IntersectionObserver | null>(null);
 
-  const fetchProducts = useCallback(async (isLoadMore = false) => {
-    if (loading || (isLoadMore && !hasMore) || loadingMore) return;
+  const isFetching = useRef(false);
 
+  const fetchProducts = useCallback(async (isLoadMore = false) => {
+    if (isFetching.current || (isLoadMore && !hasMore)) return;
+
+    isFetching.current = true;
     if (isLoadMore) setLoadingMore(true);
     else {
-      setLoading(true);
+      if (dynamicProducts.length === 0) setLoading(true);
       setError(null);
-      setDynamicProducts([]);
       setLastId(null);
       setHasMore(true);
     }
@@ -55,6 +61,11 @@ export default function Home() {
         setDynamicProducts(prev => isLoadMore ? [...prev, ...newProducts] : newProducts);
         setLastId(newLastId);
         setHasMore(moreAvailable);
+
+        // Save to cache (only first page of 'All' category)
+        if (!isLoadMore && selectedCategory === 'All' && !debouncedSearch) {
+          localStorage.setItem('vibe_home_products', JSON.stringify(newProducts));
+        }
       } else {
         throw new Error('Server responded with an error');
       }
@@ -67,8 +78,9 @@ export default function Home() {
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      isFetching.current = false;
     }
-  }, [selectedCategory, debouncedSearch, lastId, hasMore, loading, loadingMore]);
+  }, [selectedCategory, debouncedSearch, lastId, hasMore]);
 
   const lastProductElementRef = useCallback((node: HTMLDivElement) => {
     if (loading || loadingMore) return;
@@ -96,6 +108,11 @@ export default function Home() {
   useEffect(() => {
     fetchProducts(false);
   }, [selectedCategory, debouncedSearch]);
+
+  // Force an immediate fetch on mount to ensure no blocking
+  useEffect(() => {
+    fetchProducts(false);
+  }, []);
 
   const categories = ['All', 'Audio', 'Accessories', 'Wearables', 'Transport'];
 
