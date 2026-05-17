@@ -5,51 +5,60 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // 1. Minification for smaller bundle
+    // 1. Production-grade minification
     minify: 'esbuild',
     cssMinify: true,
     
-    // 2. Reduce chunk size warnings
-    chunkSizeWarningLimit: 500,
-    
-    // 3. Rollup options for better chunking (Vendor splitting)
+    // 2. Aggressive Chunk Splitting
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Split heavy dependencies into their own chunks for better caching
-            if (id.includes('firebase')) return 'vendor-firebase';
-            if (id.includes('react')) return 'vendor-react';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            return 'vendor';
+            if (id.includes('firebase')) return 'vendor-fb';
+            if (id.includes('lucide-react')) return 'vendor-ico';
+            if (id.includes('react-router') || id.includes('remix-run')) return 'vendor-router';
+            if (id.includes('react-dom')) return 'vendor-react-dom';
+            return 'vendor-core';
           }
-        }
+        },
+        // Better naming for caching
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     },
     
-    // 4. Source maps are heavy, disable in production for speed
+    // 3. Performance & Stability
+    chunkSizeWarningLimit: 600,
+    reportCompressedSize: false, // Speeds up builds
     sourcemap: false,
     
-    // 5. Assets inlining limit (small icons stay in CSS)
-    assetsInlineLimit: 4096,
+    // 4. Asset handling
+    assetsInlineLimit: 2048, // Inline very small assets only
   },
-  // Optimize CSS for mobile performance
+  // Optimize CSS with LightningCSS
   css: {
     transformer: 'lightningcss',
     lightningcss: {
       targets: {
-        android: 80 << 16, // Support slightly older Android for better reach
+        android: 80 << 16,
+        chrome: 90 << 16,
       }
     }
   },
-  // Optimize dev server for mobile (Termux)
   server: {
     host: true,
-    hmr: {
-      overlay: false // Disable HMR overlay to save resources
-    }
+    hmr: { overlay: false }
   },
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/auth', 'firebase/messaging', 'react-router-dom', 'react-hot-toast']
+    include: [
+      'firebase/app', 
+      'firebase/auth', 
+      'firebase/firestore',
+      'firebase/messaging', 
+      'react-router-dom', 
+      'react-hot-toast',
+      'lucide-react'
+    ]
   }
 })

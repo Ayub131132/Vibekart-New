@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Home, ShoppingCart, Package, User } from 'lucide-react';
 
-export default function Navbar() {
+const Navbar = memo(() => {
   const { cartCount } = useCart();
   const { user, dbUser } = useAuth();
   const location = useLocation();
@@ -110,4 +111,7 @@ export default function Navbar() {
       </Link>
     </nav>
   );
-}
+});
+
+Navbar.displayName = 'Navbar';
+export default Navbar;

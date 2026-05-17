@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function Login() {
@@ -11,41 +11,34 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showSignupLink, setShowSignupLink] = useState(false);
   
-  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, logout } = useAuth();
+  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
-  // If already logged in AND has profile, redirect
-  if (user && dbUser) {
-    navigate('/profile');
-    return null;
-  }
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/profile';
 
   const handleGoogleAuth = async () => {
     setError('');
     setShowSignupLink(false);
     try {
       await loginWithGoogle();
-      // After login, AuthContext will attempt to sync.
-      // We need to wait for dbUser or a timeout.
-      // However, a better UX is to check immediately if we can.
     } catch {
       setError('Failed to login with Google');
       toast.error('Google login failed');
     }
   };
 
-  // Add an effect to catch missing profile after login
+  // Centralized redirection logic
   useEffect(() => {
-    if (user && !loading && !dbUser) {
-      // User is logged into Firebase but has no database record
+    if (authLoading) return;
+
+    if (user && !dbUser) {
       setError('Account not found in database. Please register first.');
       setShowSignupLink(true);
-      logout(); // Security: Don't keep them logged in if they don't have a profile
+      logout(); 
     } else if (user && dbUser) {
-      toast.success('Welcome back, Vibe Member!');
-      navigate('/profile');
+      navigate(redirectTo);
     }
-  }, [user, dbUser, loading, navigate, logout]);
+  }, [user, dbUser, authLoading, navigate, logout, redirectTo]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,11 +68,10 @@ export default function Login() {
     try {
       await verifyOTP(email, otp);
       toast.success('Access Granted. Vibe secured.');
-      navigate('/profile');
+      // The useEffect will handle the redirect once sync completes
     } catch (err: any) {
       setError(err.message || 'Invalid OTP');
       toast.error('Invalid OTP. Try again.');
-    } finally {
       setLoading(false);
     }
   };

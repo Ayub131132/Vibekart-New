@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
@@ -6,7 +7,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
+const Layout = memo(({ children }: LayoutProps) => {
   return (
     <>
       <div className="layout" style={{ minHeight: '100vh' }}>
@@ -32,4 +33,7 @@ export default function Layout({ children }: LayoutProps) {
       <Navbar />
     </>
   );
-}
+});
+
+Layout.displayName = 'Layout';
+export default Layout;

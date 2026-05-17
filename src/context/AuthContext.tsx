@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { 
   onAuthStateChanged, 
@@ -118,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('[AUTH] State Change:', currentUser ? `User logged in: ${currentUser.email}` : 'User logged out');
+      setLoading(true);
       if (currentUser) {
         setUser(currentUser);
         await syncUser(currentUser);
@@ -250,11 +251,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const authValue = useMemo(() => ({ 
+    user, 
+    dbUser, 
+    isAdmin, 
+    loading, 
+    loginWithGoogle, 
+    sendOTP, 
+    verifyOTP, 
+    logout, 
+    updateProfile,
+    requestEmailChange, 
+    verifyEmailChange, 
+    createProfile
+  }), [user, dbUser, isAdmin, loading]);
+
   return (
-    <AuthContext.Provider value={{ 
-      user, dbUser, isAdmin, loading, loginWithGoogle, sendOTP, verifyOTP, logout, updateProfile,
-      requestEmailChange, verifyEmailChange, createProfile
-    }}>
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );

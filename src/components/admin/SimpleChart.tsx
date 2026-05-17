@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface DataPoint {
   date: string;
   sales: number;
@@ -8,7 +10,7 @@ interface SimpleChartProps {
   color?: string;
 }
 
-export default function SimpleChart({ data, color = 'var(--accent-blue)' }: SimpleChartProps) {
+const SimpleChart = memo(({ data, color = 'var(--accent-blue)' }: SimpleChartProps) => {
   if (!data || data.length === 0) return <div>No data available</div>;
 
   const maxSales = Math.max(...data.map(d => d.sales), 1);
@@ -48,4 +50,7 @@ export default function SimpleChart({ data, color = 'var(--accent-blue)' }: Simp
       </div>
     </div>
   );
-}
+});
+
+SimpleChart.displayName = 'SimpleChart';
+export default SimpleChart;

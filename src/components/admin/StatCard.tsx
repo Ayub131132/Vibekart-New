@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
@@ -11,7 +12,7 @@ interface StatCardProps {
   };
 }
 
-export default function StatCard({ title, value, icon: Icon, color, trend }: StatCardProps) {
+const StatCard = memo(({ title, value, icon: Icon, color, trend }: StatCardProps) => {
   return (
     <div className="glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -42,4 +43,7 @@ export default function StatCard({ title, value, icon: Icon, color, trend }: Sta
       )}
     </div>
   );
-}
+});
+
+StatCard.displayName = 'StatCard';
+export default StatCard;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function Register() {
@@ -10,47 +10,41 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, createProfile } = useAuth();
+  const { loginWithGoogle, sendOTP, verifyOTP, user, dbUser, createProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
-  // If already logged in AND has profile, redirect
-  if (user && dbUser) {
-    navigate('/profile');
-    return null;
-  }
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/profile';
 
   const handleGoogleAuth = async () => {
     setError('');
     try {
       await loginWithGoogle();
-      // AuthContext will call syncUser. 
-      // If it's a new user, syncUser will set dbUser to null.
-      // We should check and create profile.
     } catch {
       setError('Failed to signup with Google');
       toast.error('Google signup failed');
     }
   };
 
-  // Add an effect to handle profile creation for Google signup
+  // Centralized redirection and profile creation logic
   useEffect(() => {
-    const handleGoogleRegistration = async () => {
-      if (user && !loading && !dbUser) {
+    const handleSync = async () => {
+      if (authLoading) return;
+
+      if (user && !dbUser) {
         try {
           await createProfile(user);
           toast.success('Account created! Welcome to Vibekart.');
-          navigate('/profile');
+          navigate(redirectTo);
         } catch (err: any) {
           setError(err.message || 'Failed to create profile');
         }
       } else if (user && dbUser) {
-        toast.success('Welcome back, Vibe Member!');
-        navigate('/profile');
+        navigate(redirectTo);
       }
     };
     
-    handleGoogleRegistration();
-  }, [user, dbUser, loading, navigate, createProfile]);
+    handleSync();
+  }, [user, dbUser, authLoading, navigate, createProfile, redirectTo]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,11 +70,10 @@ export default function Register() {
     try {
       await verifyOTP(email, otp);
       toast.success('Account created! Welcome to Vibekart.');
-      navigate('/profile');
+      // useEffect will handle redirect
     } catch (err: any) {
       setError(err.message || 'Invalid OTP');
       toast.error('Invalid OTP. Try again.');
-    } finally {
       setLoading(false);
     }
   };

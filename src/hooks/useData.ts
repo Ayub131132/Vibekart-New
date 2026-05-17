@@ -1,76 +1,106 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
-const memoryCache: Record<string, { data: any, timestamp: number }> = {};
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
 
-export function useData<T>(key: string, endpoint: string | null = null) {
-  const [data, setData] = useState<T | null>(() => {
-    if (memoryCache[key] && (Date.now() - memoryCache[key].timestamp < CACHE_EXPIRY)) {
-      return memoryCache[key].data;
+const memoryCache: Record<string, CacheEntry<any>> = {};
+
+export function useData<T>(key: string, endpoint: string | null = null, options: { 
+  expiry?: number, 
+  forceRefresh?: boolean 
+} = {}) {
+  const { expiry = DEFAULT_CACHE_EXPIRY, forceRefresh = false } = options;
+
+  const getCachedData = useCallback((): T | null => {
+    // 1. Check memory cache first (fastest)
+    const memCache = memoryCache[key];
+    if (memCache && (Date.now() - memCache.timestamp < expiry) && !forceRefresh) {
+      return memCache.data;
     }
+
+    // 2. Check localStorage
     try {
-      const cached = localStorage.getItem(`cache_${key}`);
-      if (cached) {
-        const { value, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_EXPIRY) {
+      const localCached = localStorage.getItem(`cache_${key}`);
+      if (localCached) {
+        const { data: value, timestamp }: CacheEntry<T> = JSON.parse(localCached);
+        if ((Date.now() - timestamp < expiry) && !forceRefresh) {
+          // Hydrate memory cache
+          memoryCache[key] = { data: value, timestamp };
           return value;
         }
       }
     } catch (e) {
-      console.error('Cache parsing error:', e);
+      console.warn('[CACHE] Failed to read from localStorage', e);
     }
     return null;
-  });
+  }, [key, expiry, forceRefresh]);
 
+  const [data, setData] = useState<T | null>(getCachedData);
   const [loading, setLoading] = useState(!data);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(async (isManualRefresh = false) => {
     if (!endpoint) return;
+
+    // Check cache again for automatic effect triggers to avoid double-fetching
+    if (!isManualRefresh && !forceRefresh) {
+      const cached = getCachedData();
+      if (cached) {
+        setData(cached);
+        setLoading(false);
+        return;
+      }
+    }
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    abortControllerRef.current = new AbortController();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
+      const res = await fetch(url, {
+        signal: controller.signal
+      });
+      
+      if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+      
+      const freshData = await res.json();
+      
+      // Update caches
+      const entry: CacheEntry<T> = { data: freshData, timestamp: Date.now() };
+      memoryCache[key] = entry;
       try {
-        const res = await fetch(`${BACKEND_URL}${endpoint}`, {
-          signal: abortControllerRef.current?.signal
-        });
-        
-        if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
-        
-        const freshData = await res.json();
-        
-        setData(freshData);
-        memoryCache[key] = { data: freshData, timestamp: Date.now() };
-        localStorage.setItem(`cache_${key}`, JSON.stringify({
-          value: freshData,
-          timestamp: Date.now()
-        }));
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        console.error('Fetch failed', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
+        localStorage.setItem(`cache_${key}`, JSON.stringify(entry));
+      } catch (e) {
+        console.warn('[CACHE] Storage limit reached or blocked');
       }
-    };
 
+      setData(freshData);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Connection failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [key, endpoint, forceRefresh, getCachedData]);
+
+  useEffect(() => {
     fetchData();
-
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
     };
-  }, [key, endpoint]);
+  }, [fetchData]);
 
-  return { data, loading, error };
+  return { data, loading, error, refresh: () => fetchData(true) };
 }
