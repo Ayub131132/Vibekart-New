@@ -3,7 +3,7 @@ import ProductCard from '../components/ProductCard';
 import Skeleton from '../components/Skeleton';
 import type { Product } from '../types';
 import toast from 'react-hot-toast';
-import { Search, WifiOff, Loader2 } from 'lucide-react';
+import { Search, WifiOff } from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
