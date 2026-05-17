@@ -356,31 +356,132 @@ export default function Cart() {
         </h1>
       </div>
       
-      <div className="cart-container">
+      <div className="cart-container" style={{ paddingBottom: '8rem' }}>
         {/* Left Column: Flow Content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {step === 'cart' && (
             cart.map((item) => (
-              <div key={item.id} className="glass" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <img 
-                  src={item.image} 
-                  alt={item.name} 
-                  style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--border-radius-sm)' }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{ fontSize: '1rem', marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</h3>
-                  <p style={{ color: 'var(--accent-blue)', fontWeight: 'bold' }}>₹{item.price}</p>
+              <div 
+                key={item.id} 
+                className="glass" 
+                style={{ 
+                  padding: '1.25rem', 
+                  display: 'flex', 
+                  gap: '1.25rem', 
+                  alignItems: 'center',
+                  borderRadius: 'var(--border-radius-md)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* 1. Image Container */}
+                <div style={{ 
+                  width: '90px', 
+                  height: '90px', 
+                  minWidth: '90px', 
+                  borderRadius: 'var(--border-radius-sm)',
+                  overflow: 'hidden',
+                  background: 'var(--bg-dark-gray)'
+                }}>
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover' 
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=Vibe';
+                    }}
+                  />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Minus size={14} />
-                  </button>
-                  <span style={{ minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} style={{ background: 'var(--glass-bg)', borderRadius: '50%', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Plus size={14} />
-                  </button>
+
+                {/* 2. Product Details */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <h3 style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: 700, 
+                    whiteSpace: 'nowrap', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis',
+                    color: 'white'
+                  }}>
+                    {item.name}
+                  </h3>
+                  <p style={{ 
+                    color: 'var(--accent-blue)', 
+                    fontWeight: 800,
+                    fontSize: '1rem'
+                  }}>
+                    ₹{item.price.toLocaleString()}
+                  </p>
+                  
+                  {/* 3. Quantity Controls (Mobile-friendly) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)} 
+                      className="glass"
+                      style={{ 
+                        borderRadius: '50%', 
+                        color: 'white', 
+                        width: '32px', 
+                        height: '32px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    
+                    <span style={{ minWidth: '24px', textAlign: 'center', fontWeight: 700, fontSize: '1rem' }}>
+                      {item.quantity}
+                    </span>
+                    
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)} 
+                      className="glass"
+                      style={{ 
+                        borderRadius: '50%', 
+                        color: 'white', 
+                        width: '32px', 
+                        height: '32px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
-                <button onClick={() => removeFromCart(item.id)} style={{ color: '#ff4b2b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem' }}>
+
+                {/* 4. Remove Button (Positioned cleanly) */}
+                <button 
+                  onClick={() => removeFromCart(item.id)} 
+                  style={{ 
+                    color: 'rgba(255, 75, 43, 0.6)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: '0.5rem',
+                    transition: 'color 0.2s',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#ff4b2b'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 75, 43, 0.6)'}
+                >
                   <X size={20} />
                 </button>
               </div>
@@ -388,20 +489,24 @@ export default function Cart() {
           )}
 
           {step === 'address' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {dbUser?.addressLine && (
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
                   <button 
                     onClick={() => handleAddressSourceChange('saved')}
                     className="glass"
                     style={{ 
                       flex: 1, 
                       padding: '1rem', 
+                      borderRadius: '12px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
                       border: addressSource === 'saved' ? '2px solid var(--accent-blue)' : '1px solid var(--glass-border)',
-                      background: addressSource === 'saved' ? 'rgba(0, 210, 255, 0.1)' : 'var(--glass-bg)'
+                      background: addressSource === 'saved' ? 'rgba(0, 210, 255, 0.1)' : 'var(--glass-bg)',
+                      transition: 'all 0.3s ease'
                     }}
                   >
-                    Use Saved Address
+                    Use Saved
                   </button>
                   <button 
                     onClick={() => handleAddressSourceChange('new')}
@@ -409,68 +514,72 @@ export default function Cart() {
                     style={{ 
                       flex: 1, 
                       padding: '1rem', 
+                      borderRadius: '12px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
                       border: addressSource === 'new' ? '2px solid var(--accent-blue)' : '1px solid var(--glass-border)',
-                      background: addressSource === 'new' ? 'rgba(0, 210, 255, 0.1)' : 'var(--glass-bg)'
+                      background: addressSource === 'new' ? 'rgba(0, 210, 255, 0.1)' : 'var(--glass-bg)',
+                      transition: 'all 0.3s ease'
                     }}
                   >
-                    Enter New Address
+                    New Address
                   </button>
                 </div>
               )}
 
               {addressSource === 'saved' && dbUser?.addressLine ? (
-                <div className="glass" style={{ padding: '1.5rem' }}>
-                  <h3 style={{ marginBottom: '0.75rem', fontSize: '1.1rem' }}>Saved Delivery Details</h3>
-                  <div style={{ opacity: 0.9, lineHeight: '1.6' }}>
-                    <p style={{ fontWeight: 'bold', color: 'var(--accent-blue)', marginBottom: '0.25rem' }}>{dbUser.phoneNumber}</p>
+                <div className="glass" style={{ padding: '1.5rem', borderRadius: '16px' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-blue)' }}>Delivery Details</h3>
+                  <div style={{ opacity: 0.9, lineHeight: '1.6', fontSize: '0.95rem' }}>
+                    <p style={{ fontWeight: 800, marginBottom: '0.5rem', color: 'white' }}>{dbUser.phoneNumber}</p>
                     <p>{dbUser.addressLine}</p>
                     <p>{dbUser.villageCity}, {dbUser.selectedDistrict}</p>
                     <p>{dbUser.selectedState} - {dbUser.pinCode}</p>
                   </div>
                 </div>
               ) : (
-                <div className="glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>Phone Number</label>
+                <div className="glass" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', borderRadius: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>PHONE NUMBER</label>
                     <input 
                       type="tel" 
                       value={phoneNumber} 
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="10-digit mobile number"
                       className="glass"
-                      style={{ width: '100%', padding: '0.8rem', color: 'white', border: errors.phoneNumber ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                      style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', border: errors.phoneNumber ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
                     />
-                    {errors.phoneNumber && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.phoneNumber}</p>}
+                    {errors.phoneNumber && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.phoneNumber}</p>}
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>Address (House No, Street...)</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>FULL ADDRESS</label>
                     <input 
                       type="text" 
                       value={addressLine} 
                       onChange={(e) => setAddressLine(e.target.value)}
-                      placeholder="Flat/House No, Building, Street..."
+                      placeholder="House No, Building, Street..."
                       className="glass"
-                      style={{ width: '100%', padding: '0.8rem', color: 'white', border: errors.addressLine ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                      style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', border: errors.addressLine ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
                     />
-                    {errors.addressLine && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.addressLine}</p>}
+                    {errors.addressLine && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.addressLine}</p>}
                   </div>
 
                   <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>Village / City</label>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>CITY</label>
                       <input 
                         type="text" 
                         value={villageCity} 
                         onChange={(e) => setVillageCity(e.target.value)}
                         placeholder="City name"
                         className="glass"
-                        style={{ width: '100%', padding: '0.8rem', color: 'white', border: errors.villageCity ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                        style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', border: errors.villageCity ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
                       />
-                      {errors.villageCity && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.villageCity}</p>}
+                      {errors.villageCity && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.villageCity}</p>}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>PIN Code</label>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>PIN CODE</label>
                       <input 
                         type="text" 
                         value={pinCode} 
@@ -478,43 +587,45 @@ export default function Cart() {
                         placeholder="6-digit PIN"
                         maxLength={6}
                         className="glass"
-                        style={{ width: '100%', padding: '0.8rem', color: 'white', border: errors.pinCode ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                        style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', border: errors.pinCode ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
                       />
-                      {errors.pinCode && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.pinCode}</p>}
+                      {errors.pinCode && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.pinCode}</p>}
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>State</label>
-                    <select 
-                      value={selectedState}
-                      onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); }}
-                      className="glass"
-                      style={{ width: '100%', padding: '0.8rem', color: 'white', background: 'var(--bg-black)', border: errors.selectedState ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
-                    >
-                      <option value="">Select State</option>
-                      {Object.keys(indiaData).map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                    {errors.selectedState && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.selectedState}</p>}
-                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>STATE</label>
+                      <select 
+                        value={selectedState}
+                        onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); }}
+                        className="glass"
+                        style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', background: 'var(--bg-black)', border: errors.selectedState ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                      >
+                        <option value="">Select State</option>
+                        {Object.keys(indiaData).map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                      {errors.selectedState && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.selectedState}</p>}
+                    </div>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', opacity: 0.7 }}>District</label>
-                    <select 
-                      value={selectedDistrict}
-                      onChange={(e) => setSelectedDistrict(e.target.value)}
-                      disabled={!selectedState}
-                      className="glass"
-                      style={{ width: '100%', padding: '0.8rem', color: 'white', background: 'var(--bg-black)', opacity: !selectedState ? 0.5 : 1, border: errors.selectedDistrict ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
-                    >
-                      <option value="">Select District</option>
-                      {selectedState && indiaData[selectedState].map(dist => (
-                        <option key={dist} value={dist}>{dist}</option>
-                      ))}
-                    </select>
-                    {errors.selectedDistrict && <p style={{ color: '#ff4b2b', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.selectedDistrict}</p>}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>DISTRICT</label>
+                      <select 
+                        value={selectedDistrict}
+                        onChange={(e) => setSelectedDistrict(e.target.value)}
+                        disabled={!selectedState}
+                        className="glass"
+                        style={{ width: '100%', padding: '1rem', color: 'white', borderRadius: '12px', background: 'var(--bg-black)', opacity: !selectedState ? 0.5 : 1, border: errors.selectedDistrict ? '1px solid #ff4b2b' : '1px solid var(--glass-border)' }}
+                      >
+                        <option value="">Select District</option>
+                        {selectedState && indiaData[selectedState].map(dist => (
+                          <option key={dist} value={dist}>{dist}</option>
+                        ))}
+                      </select>
+                      {errors.selectedDistrict && <p style={{ color: '#ff4b2b', fontSize: '0.75rem' }}>{errors.selectedDistrict}</p>}
+                    </div>
                   </div>
                 </div>
               )}
@@ -524,9 +635,9 @@ export default function Cart() {
           {step === 'payment' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {/* Coupon Box */}
-              <div className="glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Ticket size={18} /> Apply Promo Code
+              <div className="glass" style={{ padding: '1.75rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'white' }}>
+                  <Ticket size={20} style={{ color: 'var(--accent-blue)' }} /> Apply Promo Code
                 </h3>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <div style={{ flex: 1, position: 'relative' }}>
@@ -536,18 +647,21 @@ export default function Cart() {
                       className="glass" 
                       style={{ 
                         width: '100%', 
-                        padding: '0.8rem 1rem', 
+                        padding: '0.9rem 1.25rem', 
                         color: 'white',
+                        borderRadius: '12px',
                         textTransform: 'uppercase',
-                        border: appliedCoupon ? '1px solid #00ff66' : '1px solid var(--glass-border)'
+                        fontSize: '0.95rem',
+                        border: appliedCoupon ? '1px solid var(--success-green)' : '1px solid var(--glass-border)',
+                        boxShadow: appliedCoupon ? '0 0 10px rgba(0, 255, 102, 0.1)' : 'none'
                       }} 
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                       disabled={!!appliedCoupon}
                     />
                     {appliedCoupon && (
-                      <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#00ff66' }}>
-                        <CheckCircle2 size={18} />
+                      <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--success-green)' }}>
+                        <CheckCircle2 size={20} />
                       </div>
                     )}
                   </div>
@@ -555,7 +669,7 @@ export default function Cart() {
                     <button 
                       onClick={() => { setAppliedCoupon(null); setCouponInput(''); }}
                       className="glass"
-                      style={{ padding: '0 1.25rem', color: '#ff4b2b', fontSize: '0.875rem' }}
+                      style={{ padding: '0 1.5rem', color: '#ff4b2b', fontSize: '0.9rem', fontWeight: 600, borderRadius: '12px', border: '1px solid rgba(255, 75, 43, 0.2)' }}
                     >
                       Remove
                     </button>
@@ -564,146 +678,220 @@ export default function Cart() {
                       onClick={handleVerifyCoupon}
                       className="neon-button"
                       disabled={!couponInput || couponLoading}
-                      style={{ padding: '0 1.5rem', opacity: !couponInput || couponLoading ? 0.5 : 1 }}
+                      style={{ padding: '0 1.75rem', borderRadius: '12px', opacity: !couponInput || couponLoading ? 0.5 : 1, fontSize: '0.9rem' }}
                     >
                       {couponLoading ? '...' : 'Apply'}
                     </button>
                   )}
                 </div>
                 {appliedCoupon && (
-                  <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#00ff66', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Successfully applied {appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : `₹${appliedCoupon.discount}`} discount!
+                  <p style={{ marginTop: '0.8rem', fontSize: '0.85rem', color: 'var(--success-green)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle2 size={14} /> Successfully applied {appliedCoupon.type === 'percentage' ? `${appliedCoupon.discount}%` : `₹${appliedCoupon.discount}`} discount!
                   </p>
                 )}
               </div>
 
-              <div className="glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '0.5rem' }}>Choose your payment method</p>
-              <div 
-                onClick={() => setPaymentMethod('COD')}
-                className="glass" 
-                style={{ 
-                  padding: '1.25rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '1rem', 
-                  cursor: 'pointer',
-                  border: paymentMethod === 'COD' ? '1px solid var(--accent-blue)' : '1px solid var(--glass-border)',
-                  marginBottom: '1rem'
-                }}
-              >
-                <div style={{ 
-                  width: '18px', 
-                  height: '18px', 
-                  borderRadius: '50%', 
-                  border: '2px solid var(--accent-blue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {paymentMethod === 'COD' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-blue)' }} />}
+              <div className="glass" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ fontSize: '0.9rem', fontWeight: 600, opacity: 0.6, marginBottom: '0.25rem', letterSpacing: '0.5px' }}>CHOOSE PAYMENT METHOD</p>
+                
+                <div 
+                  onClick={() => setPaymentMethod('COD')}
+                  className="glass" 
+                  style={{ 
+                    padding: '1.25rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1.25rem', 
+                    cursor: 'pointer',
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease',
+                    border: paymentMethod === 'COD' ? '2px solid var(--accent-blue)' : '1px solid var(--glass-border)',
+                    background: paymentMethod === 'COD' ? 'rgba(0, 210, 255, 0.05)' : 'transparent'
+                  }}
+                >
+                  <div style={{ 
+                    width: '22px', 
+                    height: '22px', 
+                    borderRadius: '50%', 
+                    border: '2px solid var(--accent-blue)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: paymentMethod === 'COD' ? 'var(--accent-blue)' : 'transparent'
+                  }}>
+                    {paymentMethod === 'COD' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'black' }} />}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                    <div style={{ padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
+                      <Truck size={22} style={{ color: 'var(--accent-blue)' }} />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: '1rem', color: 'white' }}>Cash on Delivery</p>
+                      <p style={{ fontSize: '0.75rem', opacity: 0.5 }}>Pay securely at your doorstep</p>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Truck size={20} style={{ color: 'var(--accent-blue)' }} />
-                  <span>Cash on Delivery</span>
-                </div>
-              </div>
 
-              <div 
-                onClick={() => setPaymentMethod('Razorpay')}
-                className="glass" 
-                style={{ 
-                  padding: '1.25rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '1rem', 
-                  cursor: 'pointer',
-                  border: paymentMethod === 'Razorpay' ? '1px solid var(--accent-blue)' : '1px solid var(--glass-border)'
-                }}
-              >
-                <div style={{ 
-                  width: '18px', 
-                  height: '18px', 
-                  borderRadius: '50%', 
-                  border: '2px solid var(--accent-blue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {paymentMethod === 'Razorpay' && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-blue)' }} />}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <CreditCard size={20} style={{ color: 'var(--accent-blue)' }} />
-                  <span>Online Payment (Razorpay)</span>
+                <div 
+                  onClick={() => setPaymentMethod('Razorpay')}
+                  className="glass" 
+                  style={{ 
+                    padding: '1.25rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1.25rem', 
+                    cursor: 'pointer',
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease',
+                    border: paymentMethod === 'Razorpay' ? '2px solid var(--accent-blue)' : '1px solid var(--glass-border)',
+                    background: paymentMethod === 'Razorpay' ? 'rgba(0, 210, 255, 0.05)' : 'transparent'
+                  }}
+                >
+                  <div style={{ 
+                    width: '22px', 
+                    height: '22px', 
+                    borderRadius: '50%', 
+                    border: '2px solid var(--accent-blue)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: paymentMethod === 'Razorpay' ? 'var(--accent-blue)' : 'transparent'
+                  }}>
+                    {paymentMethod === 'Razorpay' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'black' }} />}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                    <div style={{ padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
+                      <CreditCard size={22} style={{ color: 'var(--accent-blue)' }} />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: '1rem', color: 'white' }}>Online Payment</p>
+                      <p style={{ fontSize: '0.75rem', opacity: 0.5 }}>UPI, Cards, and Netbanking via Razorpay</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
-      {/* Right Column: Order Summary & Action */}
-        <div className="glass cart-summary" style={{ padding: '2rem', position: 'sticky', top: '2rem', height: 'fit-content' }}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShoppingBag size={20} /> Order Summary
+        {/* Right Column: Order Summary & Action */}
+        <div className="glass cart-summary" style={{ 
+          padding: '2.25rem', 
+          position: 'sticky', 
+          top: '2rem', 
+          height: 'fit-content',
+          borderRadius: '20px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.75rem',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+          marginBottom: '4rem' // Add spacing for bottom nav
+        }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'white' }}>
+            <ShoppingBag size={22} style={{ color: 'var(--accent-blue)' }} /> Order Summary
           </h2>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <span>Subtotal</span>
-            <span>₹{cartTotal.toFixed(2)}</span>
-          </div>
-          {appliedCoupon && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: '#00ff66' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Ticket size={14} /> Discount ({appliedCoupon.code})
-              </span>
-              <span>
-                -{appliedCoupon.type === 'percentage' 
-                  ? `₹${(cartTotal * appliedCoupon.discount / 100).toFixed(2)}` 
-                  : `₹${appliedCoupon.discount.toFixed(2)}`}
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', opacity: 0.7 }}>
+              <span>Subtotal</span>
+              <span style={{ fontWeight: 600 }}>₹{cartTotal.toFixed(2)}</span>
             </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <span>Shipping</span>
-            <span style={{ color: 'var(--accent-blue)' }}>FREE</span>
+            
+            {appliedCoupon && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: 'var(--success-green)', fontWeight: 600 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Ticket size={16} /> Discount ({appliedCoupon.code})
+                </span>
+                <span>
+                  -₹{appliedCoupon.type === 'percentage' 
+                    ? (cartTotal * appliedCoupon.discount / 100).toFixed(2) 
+                    : appliedCoupon.discount.toFixed(2)}
+                </span>
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', opacity: 0.7 }}>
+              <span>Shipping</span>
+              <span style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>FREE</span>
+            </div>
           </div>
-          <hr style={{ border: '0', borderTop: '1px solid var(--glass-border)', margin: '1.5rem 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-            <span>Total</span>
-            <span className="neon-text">₹{calculateTotal().toFixed(2)}</span>
+
+          <hr style={{ border: '0', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '0' }} />
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 600, opacity: 0.8 }}>Total Amount</span>
+            <span className="neon-text" style={{ fontSize: '1.8rem', fontWeight: 900 }}>₹{calculateTotal().toFixed(2)}</span>
           </div>
           
-          {step === 'cart' && (
-            <button className="neon-button" style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => setStep('address')}>
-              Checkout Now <ChevronRight size={18} />
-            </button>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+            {step === 'cart' && (
+              <button className="neon-button" style={{ width: '100%', padding: '1.1rem', fontSize: '1rem', borderRadius: '12px' }} onClick={() => setStep('address')}>
+                Proceed to Address <ChevronRight size={20} />
+              </button>
+            )}
 
-          {step === 'address' && (
-            <button className="neon-button" style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={handleNextToPayment}>
-              Next: Payment <ChevronRight size={18} />
-            </button>
-          )}
+            {step === 'address' && (
+              <button className="neon-button" style={{ width: '100%', padding: '1.1rem', fontSize: '1rem', borderRadius: '12px' }} onClick={handleNextToPayment}>
+                Select Payment <ChevronRight size={20} />
+              </button>
+            )}
 
-          {step === 'payment' && (
-            <button 
-              className="neon-button" 
-              style={{ width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
-              onClick={handlePlaceOrder}
-              disabled={loading}
-            >
-              {loading ? 'Processing...' : <><CreditCard size={20} /> Place Order</>}
-            </button>
-          )}
+            {step === 'payment' && (
+              <button 
+                className="neon-button" 
+                style={{ width: '100%', padding: '1.1rem', fontSize: '1rem', borderRadius: '12px', background: 'var(--accent-neon)' }} 
+                onClick={handlePlaceOrder}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : <><CreditCard size={20} /> Confirm Order</>}
+              </button>
+            )}
+          </div>
 
           {step !== 'cart' && (
-            <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', opacity: 0.5 }}>
-              Step {step === 'address' ? '1' : '2'} of 2
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', opacity: 0.4 }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step === 'address' ? 'var(--accent-blue)' : 'white' }}></div>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step === 'payment' ? 'var(--accent-blue)' : 'white' }}></div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, marginLeft: '4px' }}>
+                Step {step === 'address' ? '1' : '2'} of 2
+              </span>
+            </div>
           )}
         </div>
       </div>
+      {/* Recently Ordered Section fallback space */}
+      <style>{`
+        .cart-container {
+          display: grid;
+          grid-template-columns: 1.8fr 1fr;
+          gap: 2.5rem;
+          align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+          .cart-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+          }
+          
+          .cart-summary {
+            position: relative !important;
+            top: 0 !important;
+            margin-bottom: 6rem !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .cart-page {
+            padding: 1rem 0.5rem;
+          }
+          
+          .glass {
+            padding: 1rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
