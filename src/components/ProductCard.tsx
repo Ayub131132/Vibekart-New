@@ -3,7 +3,7 @@ import type { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Skeleton from './Skeleton';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Star } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -106,6 +106,20 @@ const ProductCard = memo(({ product }: ProductCardProps) => {
       
       <div style={{ flex: 1 }}>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.4rem', lineHeight: '1.2' }}>{product.name}</h3>
+        
+        {/* Rating Section */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', color: '#ffcc00' }}>
+            <Star size={14} fill="#ffcc00" />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', marginLeft: '4px', color: 'white' }}>
+              {product.rating || '0.0'}
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
+            ({product.reviewsCount || 0} reviews)
+          </span>
+        </div>
+
         <p style={{ 
           color: 'var(--text-secondary)', 
           fontSize: '0.85rem', 

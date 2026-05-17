@@ -96,6 +96,10 @@ const schemas = {
     discount: z.number().positive(),
     type: z.enum(['percentage', 'fixed']).optional(),
     expiryDate: z.string().optional()
+  }),
+  review: z.object({
+    rating: z.number().min(1).max(5),
+    comment: z.string().min(2).max(500)
   })
 };
 
@@ -1099,32 +1103,149 @@ app.delete('/delete-product/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 app.post('/admin/send-promotion', verifyToken, isAdmin, async (req, res) => {
-  const { title, body } = req.body;
-  if (!title || !body) return sendError(res, 400, 'INVALID_INPUT', 'Title and body are required');
+...
+});
+
+// --- Review System Endpoints ---
+
+/**
+ * Add or update a review.
+ * Only users who purchased the product and had it delivered can review.
+ */
+app.post('/products/:productId/reviews', verifyToken, validateBody(schemas.review), async (req, res) => {
+  const { productId } = req.params;
+  const { rating, comment } = req.validatedBody;
+  const { uid, name, picture } = req.user;
 
   try {
-    const usersSnapshot = await db.collection('users').get();
-    const tokens = [];
-    usersSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.fcmToken) tokens.push(data.fcmToken);
+    // 1. Verify Purchase and Status
+    const ordersSnapshot = await db.collection('orders')
+      .where('uid', '==', uid)
+      .where('status', '==', 'delivered')
+      .get();
+    
+    let hasPurchased = false;
+    ordersSnapshot.forEach(doc => {
+      const order = doc.data();
+      if (order.items.some(item => item.id === productId)) {
+        hasPurchased = true;
+      }
     });
 
-    if (tokens.length === 0) return res.status(200).json({ message: 'No users with FCM tokens found' });
+    if (!hasPurchased) {
+      return sendError(res, 403, 'NOT_AUTHORIZED', 'Only customers who purchased and received this product can leave a review.');
+    }
 
-    const message = {
-      notification: { title, body },
-      tokens: tokens
-    };
+    const productRef = db.collection('products').doc(productId);
+    const reviewRef = productRef.collection('reviews').doc(uid); // Use UID as doc ID to prevent duplicates
 
-    const response = await admin.messaging().sendMulticast(message);
-    res.status(200).json({ 
-      message: `Sent to ${response.successCount} users`,
-      failureCount: response.failureCount 
+    await db.runTransaction(async (transaction) => {
+      const productDoc = await transaction.get(productRef);
+      if (!productDoc.exists) throw new Error('Product not found');
+
+      const oldReviewDoc = await transaction.get(reviewRef);
+      const isUpdate = oldReviewDoc.exists;
+      const oldRating = isUpdate ? oldReviewDoc.data().rating : 0;
+
+      // Update Review
+      transaction.set(reviewRef, {
+        userId: uid,
+        userName: name || 'Vibe Member',
+        userImage: picture || '',
+        rating,
+        comment,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Update Product Stats
+      const productData = productDoc.data();
+      let totalRating = (productData.rating || 0) * (productData.reviewsCount || 0);
+      let newCount = productData.reviewsCount || 0;
+
+      if (isUpdate) {
+        totalRating = totalRating - oldRating + rating;
+      } else {
+        newCount += 1;
+        totalRating += rating;
+      }
+
+      const newAvgRating = parseFloat((totalRating / newCount).toFixed(1));
+      transaction.update(productRef, {
+        rating: newAvgRating,
+        reviewsCount: newCount
+      });
     });
+
+    res.status(200).json({ message: 'Review submitted successfully' });
   } catch (error) {
-    console.error('Promotion error:', error);
-    return sendError(res, 500, 'PROMOTION_FAILED', 'Failed to send promotions');
+    console.error('Review submission error:', error);
+    return sendError(res, 500, 'REVIEW_FAILED', error.message || 'Failed to submit review');
+  }
+});
+
+/**
+ * Get product reviews (paginated)
+ */
+app.get('/products/:productId/reviews', async (req, res) => {
+  const { productId } = req.params;
+  const { limit = 10 } = req.query;
+
+  try {
+    const reviewsSnapshot = await db.collection('products').doc(productId)
+      .collection('reviews')
+      .orderBy('createdAt', 'desc')
+      .limit(parseInt(limit))
+      .get();
+
+    const reviews = [];
+    reviewsSnapshot.forEach(doc => reviews.push({ id: doc.id, ...doc.data() }));
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.error('Fetch reviews error:', error);
+    return sendError(res, 500, 'FETCH_REVIEWS_FAILED', 'Failed to load reviews');
+  }
+});
+
+/**
+ * Delete own review
+ */
+app.delete('/products/:productId/reviews', verifyToken, async (req, res) => {
+  const { productId } = req.params;
+  const { uid } = req.user;
+
+  try {
+    const productRef = db.collection('products').doc(productId);
+    const reviewRef = productRef.collection('reviews').doc(uid);
+
+    await db.runTransaction(async (transaction) => {
+      const reviewDoc = await transaction.get(reviewRef);
+      if (!reviewDoc.exists) return; // Nothing to delete
+
+      const productDoc = await transaction.get(productRef);
+      if (!productDoc.exists) throw new Error('Product not found');
+
+      const ratingToDelete = reviewDoc.data().rating;
+      const productData = productDoc.data();
+      
+      const newCount = Math.max(0, (productData.reviewsCount || 0) - 1);
+      let newAvgRating = 0;
+      
+      if (newCount > 0) {
+        const totalRating = ((productData.rating || 0) * (productData.reviewsCount || 0)) - ratingToDelete;
+        newAvgRating = parseFloat((totalRating / newCount).toFixed(1));
+      }
+
+      transaction.delete(reviewRef);
+      transaction.update(productRef, {
+        rating: newAvgRating,
+        reviewsCount: newCount
+      });
+    });
+
+    res.status(200).json({ message: 'Review deleted' });
+  } catch (error) {
+    console.error('Delete review error:', error);
+    return sendError(res, 500, 'DELETE_FAILED', 'Failed to delete review');
   }
 });
 
