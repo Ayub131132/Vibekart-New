@@ -22,10 +22,15 @@ export default function Home() {
   const observer = useRef<IntersectionObserver | null>(null);
 
   const fetchProducts = useCallback(async (isLoadMore = false) => {
+    if (loading || (isLoadMore && !hasMore) || loadingMore) return;
+
     if (isLoadMore) setLoadingMore(true);
     else {
       setLoading(true);
       setError(null);
+      setDynamicProducts([]);
+      setLastId(null);
+      setHasMore(true);
     }
 
     try {
@@ -33,7 +38,6 @@ export default function Home() {
       if (selectedCategory !== 'All') params.append('category', selectedCategory);
       if (debouncedSearch) params.append('search', debouncedSearch);
       
-      // Use the latest lastId for pagination
       if (isLoadMore && lastId) {
         params.append('lastId', lastId);
       }
@@ -52,7 +56,7 @@ export default function Home() {
         setLastId(newLastId);
         setHasMore(moreAvailable);
       } else {
-        throw new Error('Failed to fetch from server');
+        throw new Error('Server responded with an error');
       }
     } catch (err) {
       console.error('Failed to fetch products:', err);
@@ -64,7 +68,7 @@ export default function Home() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedCategory, debouncedSearch, lastId]);
+  }, [selectedCategory, debouncedSearch, lastId, hasMore, loading, loadingMore]);
 
   const lastProductElementRef = useCallback((node: HTMLDivElement) => {
     if (loading || loadingMore) return;
@@ -88,40 +92,9 @@ export default function Home() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Reset pagination when category or search changes
+  // Trigger initial fetch when filters change
   useEffect(() => {
-    setDynamicProducts([]);
-    setLastId(null);
-    setHasMore(true);
-    
-    // Perform initial fetch
-    const initialFetch = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        if (selectedCategory !== 'All') params.append('category', selectedCategory);
-        if (debouncedSearch) params.append('search', debouncedSearch);
-        params.append('limit', PRODUCTS_PER_PAGE.toString());
-        
-        const res = await fetch(`${BACKEND_URL}/get-products?${params.toString()}`);
-        if (res.ok) {
-          const { products: newProducts, lastId: newLastId, hasMore: moreAvailable } = await res.json();
-          setDynamicProducts(newProducts);
-          setLastId(newLastId);
-          setHasMore(moreAvailable);
-        } else {
-          throw new Error('Server responded with an error');
-        }
-      } catch (err) {
-        console.error('Initial fetch error:', err);
-        setError('Failed to load products');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initialFetch();
+    fetchProducts(false);
   }, [selectedCategory, debouncedSearch]);
 
   const categories = ['All', 'Audio', 'Accessories', 'Wearables', 'Transport'];

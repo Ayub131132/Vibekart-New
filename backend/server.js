@@ -9,16 +9,9 @@ require('dotenv').config();
 
 const app = express();
 
-// 1. Restricted CORS (Production-ready)
+// 1. Flexible CORS
 const corsOptions = {
-  origin: [
-    'https://vibekart.com', 
-    'https://admin.vibekart.com',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
-  ],
+  origin: '*', // Allow all origins for development and ease of use in diverse environments
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
