@@ -1179,7 +1179,7 @@ app.post('/products/:productId/reviews', verifyToken, validateBody(schemas.revie
         userName: name || 'Vibe Member',
         userImage: picture || '',
         rating,
-        comment,
+        comment: comment || '',
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
