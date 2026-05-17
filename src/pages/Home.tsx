@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 import { Search, WifiOff, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-const PRODUCTS_PER_PAGE = 8;
 
 export default function Home() {
   const [dynamicProducts, setDynamicProducts] = useState<Product[]>(() => {
@@ -14,8 +13,23 @@ export default function Home() {
     const cached = localStorage.getItem('vibe_home_products');
     return cached ? JSON.parse(cached) : [];
   });
+
+  // Responsive Limit Detection
+  const [productsPerPage, setProductsPerPage] = useState(() => {
+    return window.innerWidth < 768 ? 4 : 8;
+  });
+
   const [loading, setLoading] = useState(dynamicProducts.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Update limit on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setProductsPerPage(window.innerWidth < 768 ? 4 : 8);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -44,11 +58,12 @@ export default function Home() {
       if (selectedCategory !== 'All') params.append('category', selectedCategory);
       if (debouncedSearch) params.append('search', debouncedSearch);
       
-      if (isLoadMore && lastId) {
-        params.append('lastId', lastId);
+      const currentLastId = isLoadMore ? lastId : null;
+      if (currentLastId) {
+        params.append('lastId', currentLastId);
       }
       
-      params.append('limit', PRODUCTS_PER_PAGE.toString());
+      params.append('limit', productsPerPage.toString());
       
       const url = `${BACKEND_URL}/get-products?${params.toString()}`;
       console.log(`[DEBUG] Fetching products from: ${url}`);
@@ -56,13 +71,18 @@ export default function Home() {
       
       if (res.ok) {
         const { products: newProducts, lastId: newLastId, hasMore: moreAvailable } = await res.json();
-        console.log(`[DEBUG] Received ${newProducts.length} products. HasMore: ${moreAvailable}`);
         
-        setDynamicProducts(prev => isLoadMore ? [...prev, ...newProducts] : newProducts);
+        setDynamicProducts(prev => {
+          if (!isLoadMore) return newProducts;
+          // Deduplication
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNew = newProducts.filter((p: Product) => !existingIds.has(p.id));
+          return [...prev, ...uniqueNew];
+        });
+
         setLastId(newLastId);
         setHasMore(moreAvailable);
 
-        // Save to cache (only first page of 'All' category)
         if (!isLoadMore && selectedCategory === 'All' && !debouncedSearch) {
           localStorage.setItem('vibe_home_products', JSON.stringify(newProducts));
         }
@@ -80,7 +100,7 @@ export default function Home() {
       setLoadingMore(false);
       isFetching.current = false;
     }
-  }, [selectedCategory, debouncedSearch, lastId, hasMore]);
+  }, [selectedCategory, debouncedSearch, lastId, hasMore, productsPerPage]);
 
   const lastProductElementRef = useCallback((node: HTMLDivElement) => {
     if (loading || loadingMore) return;
@@ -206,14 +226,14 @@ export default function Home() {
           }
         })}
         
-        {loading && (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass" style={{ padding: '1.25rem', height: '360px' }}>
+        {(loading || loadingMore) && (
+          Array.from({ length: productsPerPage }).map((_, i) => (
+            <div key={`skeleton-${i}`} className="glass" style={{ padding: '1.25rem', height: '360px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <Skeleton height="180px" />
-              <Skeleton height="24px" width="70%" style={{ marginTop: '1rem' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                <Skeleton height="24px" width="40px" />
-                <Skeleton height="36px" width="80px" />
+              <Skeleton height="24px" width="70%" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto' }}>
+                <Skeleton height="24px" width="40%" />
+                <Skeleton height="40px" width="100%" />
               </div>
             </div>
           ))
@@ -221,9 +241,8 @@ export default function Home() {
       </div>
 
       {loadingMore && (
-        <div style={{ textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <Loader2 className="animate-spin" size={24} style={{ color: 'var(--accent-blue)' }} />
-          <div className="neon-text" style={{ fontSize: '0.9rem', letterSpacing: '2px' }}>LOADING MORE VIBES...</div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="neon-text" style={{ fontSize: '0.9rem', letterSpacing: '2px', opacity: 0.5 }}>LOADING MORE...</div>
         </div>
       )}
 

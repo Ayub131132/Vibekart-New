@@ -1103,7 +1103,33 @@ app.delete('/delete-product/:id', verifyToken, isAdmin, async (req, res) => {
 });
 
 app.post('/admin/send-promotion', verifyToken, isAdmin, async (req, res) => {
-...
+  const { title, body } = req.body;
+  if (!title || !body) return sendError(res, 400, 'INVALID_INPUT', 'Title and body are required');
+
+  try {
+    const usersSnapshot = await db.collection('users').get();
+    const tokens = [];
+    usersSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.fcmToken) tokens.push(data.fcmToken);
+    });
+
+    if (tokens.length === 0) return res.status(200).json({ message: 'No users with FCM tokens found' });
+
+    const message = {
+      notification: { title, body },
+      tokens: tokens
+    };
+
+    const response = await admin.messaging().sendMulticast(message);
+    res.status(200).json({ 
+      message: `Sent to ${response.successCount} users`,
+      failureCount: response.failureCount 
+    });
+  } catch (error) {
+    console.error('Promotion error:', error);
+    return sendError(res, 500, 'PROMOTION_FAILED', 'Failed to send promotions');
+  }
 });
 
 // --- Review System Endpoints ---
